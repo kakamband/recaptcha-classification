@@ -6,7 +6,7 @@ import albumentations as A
 
 transformations = {
     'train_transform': A.Compose([
-        A.Rotate(border_mode=cv2.BORDER_CONSTANT, always_apply=True),
+        A.Rotate(border_mode=cv2.BORDER_CONSTANT, interpolation=cv2.INTER_AREA,  always_apply=True),
         A.Flip(),
         A.OneOf([
             A.CLAHE(tile_grid_size=(5, 5)),
@@ -18,9 +18,9 @@ transformations = {
             A.HueSaturationValue(),
             A.ChannelShuffle(p=0.25)
         ]),
-        A.Downscale(scale_min=0.5, scale_max=0.7, always_apply=True),
-        A.Blur(blur_limit=3, p=0.7),
-        A.GaussNoise(var_limit=(30., 90.), always_apply=True),
+        A.Downscale(scale_min=0.3, scale_max=0.5, always_apply=True),
+        A.GaussNoise(var_limit=(20., 90.), always_apply=True),
+        A.Blur(blur_limit=12, always_apply=True),
         A.Resize(224, 224, always_apply=True),
         A.ToFloat()
     ]),
@@ -47,19 +47,21 @@ def aug_func(image, label, is_training=False):
 
 
 def debug_augmentation(trans_func, image):
-    data = trans_func(image=image)
-    cv2.imshow('normal', image)
+    data = trans_func(image=image[0])
+    cv2.imshow('train_normal', image[0])
+    cv2.imshow('test_normal', image[1])
     while True:
         cv2.imshow('augmented', data['image'])
         key = cv2.waitKey(1)
         if key == ord('q'):
             break
         elif key == ord('n'):
-            data = trans_func(image=image)
+            data = trans_func(image=image[0])
             cv2.imshow('augmented', data['image'])
     cv2.destroyAllWindows()
 
 
 if __name__ == '__main__':
-    test_image = cv2.imread('../data/train/automobile/automobile_001.png', 1)
-    debug_augmentation(trans_func=transformations['train_transform'], image=test_image)
+    train_image = cv2.imread('../data/train/bus/bus_001.png', 1)
+    test_image = cv2.imread('../data/eval/bus/bus_001.png', 1)
+    debug_augmentation(trans_func=transformations['train_transform'], image=[train_image, test_image])
